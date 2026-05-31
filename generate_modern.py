@@ -123,7 +123,7 @@ class XHSModernGenerator:
         
         # 底部信息
         y_position = self.height - 200
-        draw.text((self.width // 2, y_position), "太原事编通 · 每日更新", 
+        draw.text((self.width // 2, y_position), "招聘信息 · 每日更新", 
                  font=date_font, fill=self.COLORS['text_light'], anchor="mt")
         
         return img
@@ -202,7 +202,7 @@ class XHSModernGenerator:
         
         # 底部引导
         y_position = self.height - 150
-        draw.text((self.width // 2, y_position), "📱 关注「太原事编通」获取更多", 
+        draw.text((self.width // 2, y_position), "📱 获取更多招聘信息", 
                  font=subtitle_font, fill=self.COLORS['text_light'], anchor="mt")
         
         return img

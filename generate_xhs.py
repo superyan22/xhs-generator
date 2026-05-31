@@ -202,7 +202,7 @@ class XHSRecruitmentGenerator:
         
         # 绘制底部引导
         y_position = self.height - 120
-        draw.text((self.width // 2, y_position), "📱 关注「太原事编通」获取更多", 
+        draw.text((self.width // 2, y_position), "📱 获取更多招聘信息", 
                  font=small_font, fill=self.COLORS['text_light'], anchor="mt")
         
         return img

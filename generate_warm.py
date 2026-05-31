@@ -156,7 +156,7 @@ class XHSWarmGenerator:
                  fill=self.COLORS['text_light'])
         
         # 账号
-        draw.text((self.width - 100, y_position), "📍 太原事编通", font=info_font,
+        draw.text((self.width - 100, y_position), "📍 招聘信息", font=info_font,
                  fill=self.COLORS['text_light'], anchor="rt")
         
         return img
@@ -249,7 +249,7 @@ class XHSWarmGenerator:
         
         # 关注引导
         y_position += 50
-        draw.text((self.width // 2, y_position), "关注「太原事编通」获取更多岗位", 
+        draw.text((self.width // 2, y_position), "获取更多招聘信息", 
                  font=subtitle_font, fill=self.COLORS['text_light'], anchor="mt")
         
         return img
