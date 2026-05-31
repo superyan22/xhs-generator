@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小红书图文生成器 - 太原事编通</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+      padding: 40px 20px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: rgba(255,255,255,0.85);
+      font-size: 16px;
+    }
+    
+    /* Main Layout */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px 20px;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 30px;
+    }
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+    }
+    
+    /* Editor Panel */
+    .editor {
+      background: #1a1a1a;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #333;
+    }
+    .editor h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #ff4757;
+    }
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    
+    .color-options {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .color-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .color-btn:hover { transform: scale(1.1); }
+    .color-btn.active { border-color: #fff; }
+    
+    .job-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .job-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px;
+      gap: 8px;
+    }
+    .job-row input {
+      padding: 10px 12px;
+      background: #252525;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .job-row input:focus { border-color: #ff4757; outline: none; }
+    
+    .add-job-btn {
+      padding: 10px;
+      background: #252525;
+      border: 2px dashed #444;
+      border-radius: 10px;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .add-job-btn:hover { border-color: #ff4757; color: #ff4757; }
+    
+    /* Preview Panel */
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .preview-header h2 {
+      font-size: 20px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .preview-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .preview-tab {
+      padding: 8px 16px;
+      background: #252525;
+      border: none;
+      border-radius: 8px;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .preview-tab.active {
+      background: #ff4757;
+      color: white;
+    }
+    
+    .preview-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .preview-card {
+      text-align: center;
+    }
+    .preview-card h4 {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    .preview-frame {
+      width: 270px;
+      height: 360px;
+      border: 2px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+    }
+    .preview-frame iframe {
+      width: 1080px;
+      height: 1440px;
+      border: none;
+      transform: scale(0.25);
+      transform-origin: top left;
+    }
+    
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+      color: white;
+    }
+    .btn-secondary {
+      background: #333;
+      color: #fff;
+    }
+    .btn-secondary:hover { background: #444; }
+    
+    /* Status */
+    .status {
+      text-align: center;
+      padding: 12px;
+      font-size: 14px;
+      color: #888;
+      min-height: 40px;
+    }
+    .status.ok { color: #2ed573; }
+    .status.err { color: #ff4757; }
+    
+    /* Tips */
+    .tips {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #333;
+      margin-top: 20px;
+    }
+    .tips h3 {
+      font-size: 16px;
+      color: #ff4757;
+      margin-bottom: 12px;
+    }
+    .tips ul {
+      list-style: none;
+      font-size: 14px;
+      color: #888;
+      line-height: 1.8;
+    }
+    .tips li::before {
+      content: "•";
+      color: #ff4757;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📱 小红书图文生成器</h1>
+    <p>3:4比例 · 1080×1440 · 内容铺满无白边</p>
+  </div>
+  
+  <div class="main">
+    <!-- Editor -->
+    <div class="editor">
+      <h2>✏️ 编辑内容</h2>
+      
+      <div class="form-group">
+        <label>主题色</label>
+        <div class="color-options">
+          <button class="color-btn active" style="background: linear-gradient(135deg, #ff4757, #ff6b81)" onclick="setColor('#ff4757', this)"></button>
+          <button class="color-btn" style="background: linear-gradient(135deg, #3742fa, #5f7fff)" onclick="setColor('#3742fa', this)"></button>
+          <button class="color-btn" style="background: linear-gradient(135deg, #2ed573, #7bed9f)" onclick="setColor('#2ed573', this)"></button>
+          <button class="color-btn" style="background: linear-gradient(135deg, #ffa502, #ffbe76)" onclick="setColor('#ffa502', this)"></button>
+          <button class="color-btn" style="background: linear-gradient(135deg, #a55eea, #cd84f1)" onclick="setColor('#a55eea', this)"></button>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>封面标题（大字）</label>
+        <input type="text" id="coverTitle" value="太原编制\n招50人！" oninput="updatePreview()">
+      </div>
+      
+      <div class="form-group">
+        <label>封面副标题</label>
+        <input type="text" id="coverSubtitle" value="35岁也能考的铁饭碗" oninput="updatePreview()">
+      </div>
+      
+      <div class="form-group">
+        <label>内容标题（口语化）</label>
+        <input type="text" id="contentTitle" value="姐妹们！今天太原又新增了一批编制岗🔥" oninput="updatePreview()">
+      </div>
+      
+      <div class="form-group">
+        <label>招聘岗位</label>
+        <div class="job-inputs" id="jobInputs">
+          <div class="job-row">
+            <input type="text" placeholder="单位名称" value="太原市教育局">
+            <input type="text" placeholder="人数" value="招5人">
+            <input type="text" placeholder="岗位" value="小学语文">
+          </div>
+          <div class="job-row">
+            <input type="text" placeholder="单位名称" value="山西省人民医院">
+            <input type="text" placeholder="人数" value="招10人">
+            <input type="text" placeholder="岗位" value="护理人员">
+          </div>
+          <div class="job-row">
+            <input type="text" placeholder="单位名称" value="晋能控股集团">
+            <input type="text" placeholder="人数" value="招20人">
+            <input type="text" placeholder="岗位" value="技术员">
+          </div>
+        </div>
+        <button class="add-job-btn" onclick="addJob()">+ 添加岗位</button>
+      </div>
+      
+      <div class="form-group">
+        <label>互动文案</label>
+        <input type="text" id="interactText" value="需要详细报名条件的点赞收藏，评论区见～" oninput="updatePreview()">
+      </div>
+      
+      <div class="form-group">
+        <label>底部提示（评论区置顶用）</label>
+        <textarea id="bottomTip" oninput="updatePreview()">完整岗位表在评论区第一条👇
+每天更新太原编制招聘信息
+点⭐收藏，找工作时翻出来～</textarea>
+      </div>
+    </div>
+    
+    <!-- Preview -->
+    <div class="preview-panel">
+      <div class="preview-header">
+        <h2>👁️ 预览效果</h2>
+      </div>
+      
+      <div class="preview-container">
+        <div class="preview-card">
+          <h4>📌 封面</h4>
+          <div class="preview-frame">
+            <iframe id="preview-cover" srcdoc=""></iframe>
+          </div>
+        </div>
+        <div class="preview-card">
+          <h4>📋 内容</h4>
+          <div class="preview-frame">
+            <iframe id="preview-content" srcdoc=""></iframe>
+          </div>
+        </div>
+        <div class="preview-card">
+          <h4>💬 互动</h4>
+          <div class="preview-frame">
+            <iframe id="preview-interact" srcdoc=""></iframe>
+          </div>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button class="btn btn-primary" onclick="downloadAll()">📥 一键下载全部</button>
+        <button class="btn btn-secondary" onclick="downloadOne('cover')">下载封面</button>
+        <button class="btn btn-secondary" onclick="downloadOne('content')">下载内容</button>
+        <button class="btn btn-secondary" onclick="downloadOne('interact')">下载互动</button>
+      </div>
+      
+      <div class="status" id="status">准备就绪</div>
+      
+      <div class="tips">
+        <h3>💡 使用技巧</h3>
+        <ul>
+          <li>封面标题用大字，一行不超过5个字效果最好</li>
+          <li>内容页每个岗位一张卡片，信息简洁明了</li>
+          <li>互动页引导"收藏"比"评论"更容易被推荐</li>
+          <li>导出后直接发小红书，比例正好是3:4</li>
+          <li>发布时间建议早上7:00-8:00</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let primaryColor = '#ff4757';
+    
+    function setColor(color, btn) {
+      primaryColor = color;
+      document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updatePreview();
+    }
+    
+    function getJobs() {
+      const rows = document.querySelectorAll('.job-row');
+      const jobs = [];
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0].value) {
+          jobs.push({
+            name: inputs[0].value,
+            count: inputs[1].value,
+            position: inputs[2].value
+          });
+        }
+      });
+      return jobs;
+    }
+    
+    function addJob() {
+      const container = document.getElementById('jobInputs');
+      const row = document.createElement('div');
+      row.className = 'job-row';
+      row.innerHTML = `
+        <input type="text" placeholder="单位名称" oninput="updatePreview()">
+        <input type="text" placeholder="人数" oninput="updatePreview()">
+        <input type="text" placeholder="岗位" oninput="updatePreview()">
+      `;
+      container.appendChild(row);
+    }
+    
+    function getCoverHTML() {
+      const title = document.getElementById('coverTitle').value.replace(/\n/g, '<br>');
+      const subtitle = document.getElementById('coverSubtitle').value;
+      const jobs = getJobs();
+      
+      const tagsHTML = jobs.map(j => `<span class="tag">${j.name.includes('教育') ? '🏫' : j.name.includes('医') ? '🏥' : '💼'} ${j.position}${j.count}</span>`).join('');
+      
+      return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+.page{width:100vw;height:100vh;background:linear-gradient(135deg,${primaryColor} 0%,${primaryColor}cc 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative}
+.content{width:100%;padding:0 8%;display:flex;flex-direction:column;align-items:center}
+.badge{display:inline-block;padding:3vmin 6vmin;background:rgba(0,0,0,0.2);color:white;border-radius:100px;font-size:4vmin;font-weight:700;margin-bottom:8vmin;letter-spacing:0.5vmin}
+.title{font-size:18vmin;font-weight:900;color:white;line-height:1.1;margin-bottom:6vmin;text-shadow:0.8vmin 0.8vmin 0 rgba(0,0,0,0.1)}
+.subtitle{font-size:6vmin;color:rgba(255,255,255,0.95);font-weight:600;margin-bottom:12vmin}
+.tags{display:flex;gap:3vmin;flex-wrap:wrap;justify-content:center;width:100%}
+.tag{padding:3vmin 5vmin;background:rgba(255,255,255,0.2);border-radius:2vmin;color:white;font-size:4vmin;font-weight:600;flex:1;max-width:30%}
+.bottom{position:absolute;bottom:0;left:0;right:0;padding:5vmin 8%;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.1)}
+.date{font-size:3.5vmin;color:rgba(255,255,255,0.9)}
+.account{font-size:3.5vmin;color:white;background:rgba(255,255,255,0.2);padding:2vmin 4vmin;border-radius:1.5vmin;font-weight:600}
+</style></head><body>
+<div class="page"><div class="content">
+<span class="badge">🔥 今日热招</span>
+<h1 class="title">${title}</h1>
+<p class="subtitle">${subtitle}</p>
+<div class="tags">${tagsHTML}</div>
+</div>
+<div class="bottom">
+<span class="date">📅 ${new Date().toISOString().slice(0,10)}</span>
+<span class="account">📍 太原事编通</span>
+</div></div>
+</body></html>`;
+    }
+    
+    function getContentHTML() {
+      const title = document.getElementById('contentTitle').value;
+      const jobs = getJobs();
+      const tip = document.getElementById('bottomTip').value;
+      
+      const jobsHTML = jobs.map(j => `
+        <div class="job-item">
+          <div class="job-header">
+            <span class="job-name">${j.name.includes('教育') ? '🏫' : j.name.includes('医') ? '🏥' : j.name.includes('集团') || j.name.includes('控股') ? '🏭' : '🏛️'} ${j.name}</span>
+            <span class="job-count">${j.count}</span>
+          </div>
+          <p class="job-position">${j.position}</p>
+        </div>
+      `).join('');
+      
+      return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+.page{width:100vw;height:100vh;background:#fff;display:flex;flex-direction:column;position:relative}
+.header{padding:6vmin 8% 5vmin;background:${primaryColor};width:100%}
+.header-title{font-size:6vmin;font-weight:800;color:white;margin-bottom:2vmin;line-height:1.3}
+.header-subtitle{font-size:3.5vmin;color:rgba(255,255,255,0.9);line-height:1.6}
+.job-list{flex:1;padding:5vmin 8%;display:flex;flex-direction:column;gap:3vmin;overflow:hidden}
+.job-item{padding:4vmin;background:#fff5f5;border-radius:2vmin;border-left:1vmin solid ${primaryColor};width:100%}
+.job-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2vmin}
+.job-name{font-size:4.5vmin;font-weight:700;color:#333}
+.job-count{padding:1.5vmin 3vmin;background:${primaryColor};color:white;border-radius:1vmin;font-size:3.5vmin;font-weight:700}
+.job-position{font-size:4vmin;color:#666}
+.footer{padding:4vmin 8%;background:#f8f9fa;text-align:center;border-top:0.2vmin solid #eee}
+.footer-text{font-size:3.5vmin;color:${primaryColor};font-weight:600;line-height:1.6}
+</style></head><body>
+<div class="page">
+<div class="header">
+<h2 class="header-title">${title}</h2>
+<p class="header-subtitle">帮你节省翻公告的时间，直接看重点👇</p>
+</div>
+<div class="job-list">${jobsHTML}</div>
+<div class="footer"><p class="footer-text">${tip.replace(/\n/g, '<br>')}</p></div>
+</div>
+</body></html>`;
+    }
+    
+    function getInteractHTML() {
+      const text = document.getElementById('interactText').value;
+      
+      return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+.page{width:100vw;height:100vh;background:linear-gradient(135deg,${primaryColor} 0%,${primaryColor}cc 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative}
+.content{width:100%;padding:0 8%;display:flex;flex-direction:column;align-items:center}
+.emoji{font-size:18vmin;margin-bottom:6vmin}
+.title{font-size:9vmin;font-weight:800;color:white;margin-bottom:5vmin;line-height:1.3}
+.subtitle{font-size:5vmin;color:rgba(255,255,255,0.9);margin-bottom:10vmin;line-height:1.6}
+.buttons{display:flex;gap:4vmin;flex-wrap:wrap;justify-content:center;width:100%}
+.btn{padding:4vmin 8vmin;border-radius:2vmin;font-size:5vmin;font-weight:700;flex:1;max-width:45%}
+.btn.primary{background:white;color:${primaryColor}}
+.btn.secondary{background:rgba(255,255,255,0.2);color:white}
+.footer{position:absolute;bottom:0;left:0;right:0;padding:5vmin 8%;background:rgba(0,0,0,0.1);font-size:4vmin;color:rgba(255,255,255,0.8)}
+</style></head><body>
+<div class="page"><div class="content">
+<div class="emoji">🔥</div>
+<h2 class="title">机会不等人！</h2>
+<p class="subtitle">${text}</p>
+<div class="buttons">
+<span class="btn primary">⭐ 收藏备用</span>
+<span class="btn secondary">👍 点赞支持</span>
+</div>
+</div>
+<div class="footer"><p>每天整理太原编制岗位不易，点个关注不迷路~</p></div>
+</div>
+</body></html>`;
+    }
+    
+    function updatePreview() {
+      document.getElementById('preview-cover').srcdoc = getCoverHTML();
+      document.getElementById('preview-content').srcdoc = getContentHTML();
+      document.getElementById('preview-interact').srcdoc = getInteractHTML();
+    }
+    
+    function msg(text, type) {
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status ' + (type || '');
+    }
+    
+    async function captureIframe(id) {
+      const iframe = document.getElementById(id);
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      
+      if (doc.readyState !== 'complete') {
+        await new Promise(r => { iframe.onload = r; });
+      }
+      
+      return await html2canvas(doc.documentElement, {
+        width: 1080,
+        height: 1440,
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false
+      });
+    }
+    
+    function saveCanvas(canvas, filename) {
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+    
+    async function downloadOne(type) {
+      try {
+        msg('正在生成 ' + type + ' ...');
+        const canvas = await captureIframe('preview-' + type);
+        const ts = new Date().toISOString().slice(0,10);
+        saveCanvas(canvas, `xhs_${type}_${ts}.png`);
+        msg(type + ' 已下载 ✓', 'ok');
+      } catch(e) {
+        msg('失败: ' + e.message, 'err');
+      }
+    }
+    
+    async function downloadAll() {
+      const types = ['cover', 'content', 'interact'];
+      try {
+        for (const t of types) {
+          msg('正在生成 ' + t + ' ...');
+          const canvas = await captureIframe('preview-' + t);
+          const ts = new Date().toISOString().slice(0,10);
+          saveCanvas(canvas, `xhs_${t}_${ts}.png`);
+          await new Promise(r => setTimeout(r, 500));
+        }
+        msg('全部下载完成 ✓', 'ok');
+      } catch(e) {
+        msg('失败: ' + e.message, 'err');
+      }
+    }
+    
+    // 初始化预览
+    updatePreview();
+  </script>
+</body>
+</html>
